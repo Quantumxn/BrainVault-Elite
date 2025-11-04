@@ -1,0 +1,93 @@
+# BrainVault Elite - Git Ignore File
+
+# Log files
+*.log
+/var/log/brainvault_*.log
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor files
+*.swp
+*.swo
+*.swn
+.vscode/
+.idea/
+*.sublime-*
+
+# Sensitive data
+*.key
+*.pem
+*.crt
+*.p12
+secrets/
+.env
+.env.local
+
+# Build artifacts
+*.o
+*.so
+*.dylib
+dist/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+venv/
+env/
+
+# Node.js (if web dashboard added)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Testing
+coverage/
+.coverage
+htmlcov/
+
+# Local configuration
+local_config.sh
+local_settings.yaml
+
+# Installation-specific
+/opt/brainvault/backups/*
+!/opt/brainvault/backups/.gitkeep
+/var/log/brainvault-*.log
+
+# Terraform (if infrastructure as code added)
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Docker
+.dockerignore
+
+# Archives
+*.tar.gz
+*.zip
+*.rar
+
+# System files
+.fuse_hidden*
+.nfs*
+
+# User-specific test files
+test_output/
+scratch/

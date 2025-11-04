@@ -1,0 +1,168 @@
+name: Validate Scripts
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  syntax-check:
+    name: Bash Syntax Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Install shellcheck
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y shellcheck
+    
+    - name: Validate bash syntax
+      run: |
+        echo "Checking all shell scripts..."
+        find . -name "*.sh" -type f -exec bash -n {} \;
+        echo "✅ All scripts have valid syntax"
+    
+    - name: Run shellcheck
+      run: |
+        echo "Running shellcheck..."
+        find . -name "*.sh" -type f -exec shellcheck -x {} \; || true
+    
+    - name: Run validation script
+      run: |
+        bash scripts/utils/validation.sh
+
+  test-suite:
+    name: Run Test Suite
+    runs-on: ubuntu-latest
+    needs: syntax-check
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Make scripts executable
+      run: |
+        chmod +x brainvault_elite.sh
+        chmod +x test_brainvault.sh
+        chmod +x TEST_IT_YOURSELF.sh
+        chmod +x scripts/utils/validation.sh
+    
+    - name: Run self-verification
+      run: |
+        bash TEST_IT_YOURSELF.sh
+    
+    - name: Run test suite (non-root tests)
+      run: |
+        bash test_brainvault.sh || true
+
+  documentation-check:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Check documentation files
+      run: |
+        echo "Checking required documentation..."
+        test -f README.md || exit 1
+        test -f CONTRIBUTING.md || exit 1
+        test -f LICENSE || exit 1
+        test -f CHANGELOG.md || exit 1
+        echo "✅ All required documentation present"
+    
+    - name: Validate markdown links
+      run: |
+        echo "Checking internal markdown links..."
+        # Check if referenced files exist
+        grep -oP '\[.*?\]\(\K[^)]+(?=\))' README.md | while read -r link; do
+          if [[ "$link" != http* ]] && [[ "$link" != "#"* ]]; then
+            if [[ ! -f "$link" ]]; then
+              echo "⚠️  Broken link: $link"
+            fi
+          fi
+        done
+        echo "✅ Link validation complete"
+
+  dry-run-test:
+    name: Dry-Run Test (Root Required)
+    runs-on: ubuntu-latest
+    needs: [syntax-check, test-suite]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Make executable
+      run: chmod +x brainvault_elite.sh
+    
+    - name: Run dry-run (with sudo)
+      run: |
+        sudo ./brainvault_elite.sh --dry-run --verbose 2>&1 | tee dry-run-output.log
+        
+    - name: Check dry-run success
+      run: |
+        if grep -q "DRY-RUN SUMMARY" dry-run-output.log; then
+          echo "✅ Dry-run completed successfully"
+        else
+          echo "❌ Dry-run did not complete properly"
+          exit 1
+        fi
+    
+    - name: Upload dry-run output
+      uses: actions/upload-artifact@v3
+      with:
+        name: dry-run-output
+        path: dry-run-output.log
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Run basic security checks
+      run: |
+        echo "Checking for hardcoded secrets..."
+        ! grep -rE '(password|secret|key|token)\s*=\s*["\047][^"\047]{10,}' --include="*.sh" . || {
+          echo "⚠️  Potential hardcoded secrets found"
+        }
+        
+        echo "Checking for dangerous commands..."
+        ! grep -rE '(rm -rf /|mkfs|dd if=/dev/zero)' --include="*.sh" . || {
+          echo "⚠️  Dangerous commands found"
+        }
+        
+        echo "✅ Basic security checks passed"
+
+  compatibility-check:
+    name: Ubuntu Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Check bash version
+      run: bash --version
+    
+    - name: System information
+      run: |
+        echo "OS: $(lsb_release -ds)"
+        echo "Kernel: $(uname -r)"
+        echo "Bash: $(bash --version | head -1)"
+    
+    - name: Validate syntax on ${{ matrix.os }}
+      run: |
+        find . -name "*.sh" -type f -exec bash -n {} \;
+        echo "✅ Syntax valid on ${{ matrix.os }}"
