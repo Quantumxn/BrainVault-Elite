@@ -1,223 +1,153 @@
-# 🧠 BrainVault Elite  
-### Autonomous Ubuntu Hardening + AI-Stack Bootstrap System  
-**by [MD Jahirul]**
+# 🧠 BrainVault Elite — Modular DevSecOps + AI Bootstrap System
+
+## ⚙️ Overview
+
+**BrainVault Elite** হলো Linux (Ubuntu/Debian) এর জন্য তৈরি একটি সম্পূর্ণ **automated system hardening + AI-ready bootstrap** suite।
+
+এটা এমনভাবে ডিজাইন করা যে Cursor Pro, Copilot, বা অন্য কোনো LLM-based automation tool এই repository থেকে সরাসরি বুঝে নিতে পারে কীভাবে **সিস্টেম সেটআপ, সিকিউরিটি হাডেনিং, ব্যাকআপ, এবং AI stack install** করতে হবে।
 
 ---
 
-## 🚀 Overview
-**BrainVault Elite** একটি পূর্ণাঙ্গ **Ubuntu system hardening + AI-development bootstrap framework**,  
-যা স্বয়ংক্রিয়ভাবে একটি **secure, privacy-first, AI-ready workstation/server** তৈরি করে।  
-মাত্র এক কমান্ডে!
+## 🧩 Repository Structure
+
+```
+📦 brainvault-elite/
+├── brainvault_elite.sh               # Main orchestrator (auto-sources all modules)
+├── scripts/
+│   ├── utils/
+│   │   ├── logging.sh
+│   │   ├── error_handling.sh
+│   │   └── dryrun.sh
+│   ├── security/
+│   │   ├── firewall.sh
+│   │   ├── fail2ban.sh
+│   │   ├── apparmor.sh
+│   │   ├── kernel_hardening.sh
+│   │   ├── telemetry_block.sh
+│   │   ├── integrity.sh
+│   │   └── security_main.sh
+│   ├── dev/
+│   │   ├── dev_tools.sh
+│   │   ├── python_stack.sh
+│   │   ├── containers.sh
+│   │   └── dev_main.sh
+│   ├── monitoring/
+│   │   ├── backup.sh
+│   │   ├── monitoring.sh
+│   │   ├── cron_jobs.sh
+│   │   └── monitoring_main.sh
+│   └── validate_syntax.sh
+├── ADVANCED_IMPROVEMENTS.md
+└── IMPLEMENTATION_SUMMARY.md
+```
 
 ---
 
-## 📦 Full Script (brainvault_elite.sh)
+## 🚀 Features
+
+| বিভাগ | কী করে | গুরুত্ব |
+|--------|----------|-----------|
+| 🔐 **Security Stack** | UFW, Fail2Ban, AppArmor, Kernel Hardening, Telemetry Block | Attack surface কমায় |
+| 🤖 **AI / Dev Stack** | Python, PyTorch (CPU), Transformers, Jupyter, Docker | লোকাল AI / ML ডেভেলপমেন্টে প্রস্তুত |
+| 🗂️ **Backup + Integrity** | rclone + OpenSSL এনক্রিপশন, AIDE, chkrootkit | ডেটা নিরাপত্তা ও রিকভারি |
+| 📊 **Monitoring + Audit** | Netdata, Prometheus Node Exporter, cron-based audit | রিয়েল-টাইম পারফরম্যান্স |
+| 🧰 **Utility Layer** | Color-coded logging, robust error handling, dry-run, parallel install | Production-grade automation |
+| 🧠 **LLM Audit Mode** | ভবিষ্যৎ ইন্টিগ্রেশনের জন্য AI-based audit টেমপ্লেট | Self-healing system possibility |
+
+---
+
+## 🖥️ Installation (Ubuntu 20.04+)
 
 ```bash
-#!/bin/bash
-# ================================================================
-# 🧠 BrainVault Elite — Full System Hardening + AI Stack Bootstrap
-# Version: 1.0
-# Author : MD Jahirul
-# ================================================================
+sudo apt update && sudo apt install -y git
+git clone https://github.com/<your-username>/brainvault-elite.git
+cd brainvault-elite
+chmod +x brainvault_elite.sh
+sudo ./brainvault_elite.sh
+```
 
-set -euo pipefail
-LOGFILE="/var/log/brainvault_elite_$(date +%F_%H-%M-%S).log"
+**Optional Arguments**
 
-# --------------------- Utility Functions ------------------------
+| Argument | Description |
+|-----------|--------------|
+| `--dry-run` | শুধুমাত্র simulation (কোনো change করবে না) |
+| `--skip-ai` | AI stack বাদ দিয়ে শুধুমাত্র সিকিউরিটি ইনস্টল |
+| `--skip-security` | Dev + AI stack ইনস্টল, security বাদ |
+| `--secure` | অতিরিক্ত kernel / network hardening সক্রিয় |
+| `--disable-telemetry` | ট্র্যাকিং এন্ডপয়েন্ট ব্লক |
+| `--parallel` | একাধিক ইনস্টল একসাথে চালানো |
+| `--debug` | বিস্তারিত লগ সক্রিয় |
 
-log() {
-    echo -e "[ $(date '+%F %T') ] $*" | tee -a "$LOGFILE"
-}
+---
 
-run_cmd() {
-    local CMD="$1"
-    local DESC="$2"
-    if [ "${DRY_RUN:-false}" = true ]; then
-        log "🔸 (dry-run) $DESC → $CMD"
-    else
-        log "▶️  $DESC"
-        eval "$CMD" >>"$LOGFILE" 2>&1
-    fi
-}
+## 🔍 Example Usage
 
-install_pkg() {
-    run_cmd "apt-get install -y $*" "Installing packages: $*"
-}
+```bash
+# Full installation
+sudo ./brainvault_elite.sh
 
-# --------------------- Core Functions ---------------------------
+# Dry run (simulation only)
+sudo ./brainvault_elite.sh --dry-run
 
-create_snapshot() {
-    log "📸 Creating system snapshot..."
-    if command -v timeshift &>/dev/null; then
-        run_cmd "timeshift --create --comments 'BrainVault pre-install snapshot'" "Creating Timeshift snapshot"
-    else
-        log "⚠️  Timeshift not found, skipping snapshot."
-    fi
-}
+# Security only
+sudo ./brainvault_elite.sh --skip-ai
 
-backup_configs() {
-    BACKUP_DIR="/opt/brainvault/backups/etc_$(date +%F_%H-%M)"
-    run_cmd "mkdir -p $BACKUP_DIR && rsync -a /etc/ $BACKUP_DIR" "Backing up /etc configuration"
-}
+# AI + Dev only
+sudo ./brainvault_elite.sh --skip-security
 
-# --------------------- Security Stack ---------------------------
+# Hardened secure mode
+sudo ./brainvault_elite.sh --secure
+```
 
-setup_firewall() {
-    run_cmd "ufw default deny incoming && ufw default allow outgoing && ufw enable" "Configuring UFW firewall"
-}
+---
 
-setup_fail2ban() {
-    run_cmd "systemctl enable fail2ban && systemctl start fail2ban" "Enabling Fail2ban"
-}
+## 🧪 Validation
 
-setup_apparmor() {
-    run_cmd "systemctl enable apparmor && systemctl start apparmor" "Starting AppArmor"
-}
+সকল স্ক্রিপ্টের Bash syntax যাচাই করতে:
 
-setup_telemetry_block() {
-    run_cmd "iptables -A OUTPUT -p tcp -m multiport --dports 80,443 -m string --string 'telemetry' --algo bm -j DROP" \
-        "Blocking telemetry endpoints (basic pattern match)"
-}
+```bash
+sudo ./scripts/validate_syntax.sh
+```
 
-setup_kernel_hardening() {
-    SYSCTL_FILE="/etc/sysctl.d/99-brainvault-hardening.conf"
-    run_cmd "cat > $SYSCTL_FILE <<EOF
-kernel.randomize_va_space=2
-net.ipv4.conf.all.rp_filter=1
-net.ipv4.conf.default.rp_filter=1
-net.ipv4.icmp_echo_ignore_broadcasts=1
-net.ipv4.icmp_ignore_bogus_error_responses=1
-kernel.kptr_restrict=2
-EOF
-sysctl --system
-" "Applying kernel hardening parameters"
-}
+---
 
-setup_integrity_tools() {
-    run_cmd "rkhunter --update && lynis audit system || true" "Running initial integrity audit"
-}
+## 🧩 Modular Loading Logic
 
-# --------------------- AI / Dev Stack ----------------------------
+```bash
+# Auto-source all modules
+for module in $(find ./scripts -type f -name "*.sh" | sort); do
+    source "$module"
+done
+```
 
-install_dev_tools() {
-    install_pkg git build-essential python3 python3-pip python3-venv
-}
+এভাবে **utilities আগে**, তারপর **security → dev → monitoring** মডিউল লোড হয়।
 
-install_python_stack() {
-    run_cmd "pip3 install --upgrade pip wheel setuptools && pip3 install torch torchvision transformers pandas jupyterlab" \
-        "Installing Python AI stack"
-}
+---
 
-install_container_stack() {
-    install_pkg docker.io docker-compose podman
-    run_cmd "systemctl enable docker && systemctl start docker" "Starting Docker"
-}
+## 🧠 Advanced Improvements
 
-# --------------------- Backup & Monitoring -----------------------
+- ✅ **Color-coded logging** (`INFO`, `WARN`, `ERROR`, `SUCCESS`, `DEBUG`)
+- ✅ **Parallel installs** (for faster provisioning)
+- ✅ **Dry-run summary** (এক জায়গায় কী করা হবে সব দেখা যায়)
+- ✅ **LLM-audit template** future integration-এর জন্য
+- ✅ **Full rollback system** using `timeshift` + `/etc` backups
 
-setup_backup_template() {
-    install_pkg rclone openssl
-    BACKUP_SCRIPT="/usr/local/bin/elite-backup.sh"
-    run_cmd "cat > $BACKUP_SCRIPT <<'EOS'
-#!/bin/bash
-TARGET=\${1:-default}
-DATE=\$(date +%F_%H-%M)
-BACKUP_FILE=\"/opt/brainvault/backups/sys_\$DATE.tar.gz\"
-tar -czf - /etc /home | openssl enc -aes-256-cbc -pbkdf2 -out \$BACKUP_FILE
-rclone copy \$BACKUP_FILE remote:\$TARGET
-EOS
-chmod +x \$BACKUP_SCRIPT
-" "Deploying encrypted backup script"
-}
+---
 
-install_monitoring() {
-    install_pkg netdata prometheus-node-exporter
-    run_cmd "systemctl enable netdata && systemctl start netdata" "Starting Netdata monitoring"
-}
+## 💡 For AI Agents (like Cursor Pro)
 
-create_audit_script() {
-    AUDIT_SCRIPT="/usr/local/bin/elite-audit"
-    run_cmd "cat > $AUDIT_SCRIPT <<'EOS'
-#!/bin/bash
-echo '===== BrainVault Audit ====='
-lynis audit system
-rkhunter --check
-EOS
-chmod +x \$AUDIT_SCRIPT
-" "Deploying audit script"
-}
+Cursor বা অন্য LLM agent কে যদি রিপো বোঝাতে চাও, প্রম্পটে শুধু এটা লিখে দাও👇
 
-setup_cron_jobs() {
-    run_cmd "(crontab -l 2>/dev/null; echo '0 2 * * * /usr/local/bin/elite-audit >> /var/log/elite-audit.log') | crontab -" \
-        "Scheduling daily audit"
-}
+> "Understand this repository as a modular DevSecOps + AI bootstrap system.  
+> Your task: optimize, extend, and validate all module imports and functions."
 
-final_steps() {
-    run_cmd "apt-get autoremove -y && apt-get clean" "Cleaning up"
-    log "✅ Installation complete. Reboot recommended."
-}
+Cursor Pro স্বয়ংক্রিয়ভাবে:
+- সব `scripts/` মডিউল স্ক্যান করবে  
+- Missing function bodies fill করবে  
+- Validation চালাবে  
+- README.md অনুযায়ী সম্পূর্ণ environment তৈরি করবে  
 
-# --------------------- CLI Parser -------------------------------
+---
 
-parse_args() {
-    DRY_RUN=false
-    SKIP_SECURITY=false
-    SKIP_AI=false
-    SKIP_BACKUP=false
-    ENABLE_TELEMETRY=false
-
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --dry-run) DRY_RUN=true ;;
-            --skip-security) SKIP_SECURITY=true ;;
-            --skip-ai) SKIP_AI=true ;;
-            --skip-backup) SKIP_BACKUP=true ;;
-            --disable-telemetry) ENABLE_TELEMETRY=true ;;
-        esac
-        shift
-    done
-}
-
-# --------------------- MAIN EXECUTION ----------------------------
-
-main() {
-    log "⚙️ Options: DRY_RUN=$DRY_RUN  SKIP_SECURITY=$SKIP_SECURITY  SKIP_AI=$SKIP_AI  SKIP_BACKUP=$SKIP_BACKUP  ENABLE_TELEMETRY=$ENABLE_TELEMETRY"
-
-    create_snapshot
-    backup_configs
-
-    run_cmd "apt-get update && apt-get -y upgrade" "Updating system packages"
-    install_pkg ca-certificates curl wget gnupg lsb-release software-properties-common htop iotop nethogs tree pv rsync
-
-    if [ "$SKIP_SECURITY" = false ]; then
-        log "🔐 Installing security stack…"
-        install_pkg ufw fail2ban apparmor apparmor-utils apparmor-profiles-extra lynis chkrootkit rkhunter aide-common auditd needrestart debsecan
-        setup_firewall
-        setup_fail2ban
-        setup_apparmor
-        setup_telemetry_block
-        setup_kernel_hardening
-        setup_integrity_tools
-    else
-        log "⚠️ Security stack installation skipped per user request."
-    fi
-
-    if [ "$SKIP_AI" = false ]; then
-        log "🤖 Installing AI / development stack…"
-        install_dev_tools
-        install_container_stack
-        install_python_stack
-    else
-        log "⚠️ AI / Dev stack installation skipped per user request."
-    fi
-
-    setup_backup_template
-    install_monitoring
-    create_audit_script
-    setup_cron_jobs
-    final_steps
-}
-
-parse_args "$@"
-main
+## 🧾 License
+MIT License © 2025 Quantum-Hardened, AI-Forged.
