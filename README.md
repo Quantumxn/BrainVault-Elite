@@ -56,7 +56,7 @@
 
 ---
 
-## 🖥️ Installation (Ubuntu 20.04+)
+## 🖥️ Installation (Ubuntu 
 
 ```bash
 sudo apt update && sudo apt install -y git
